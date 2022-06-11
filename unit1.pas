@@ -54,7 +54,7 @@ var
 
 implementation
 
-uses LCLType, LCLMessageGlue;
+uses LCLType, LCLMessageGlue, StrUtils;
 
 {$R *.lfm}
 
@@ -65,8 +65,23 @@ begin
 
 end;
 
-procedure TForm1.FormKeyDown(Sender: TObject; var Key: Word; Shift: TShiftState
-  );
+procedure TForm1.FormKeyDown(Sender: TObject; var Key: Word; Shift: TShiftState);
+
+  { Whether pressing a letter should make it upper?
+    It sucks, but in this workaround we cannot depend on KeyPress reaching us
+    (it doesn't reach us when menu item intercepts the key)
+    so we need to calculate key here. }
+  function LettersUpCase: Boolean;
+  begin
+    Result := false;
+    { TODO: Windows-only:
+    GetKeyboardState(KeyState);
+    if KeyState[VK_CAPITAL] := 1 then
+      Result := true; }
+    if ssShift in Shift then
+      Result := not Result;
+  end;
+
 var
   S: String;
 begin
@@ -101,13 +116,28 @@ begin
     - Our 2 important text-editing states are TEdit and editing in TTreeView,
       the latter is luckily just an internal TEdit too.
 
+    Note: This is still ugly and inheretntly unreliable workaround, because we
+    interpret what some special built-in keys should do. So we need to
+    capture all such keys, and implement same logic...
+    E.g. pressing "f" key, with and without Shift, with and without CapsLock,
+    should be consistent with system-handled "g" key.
+    - What happens if we don't include special handling for some key,
+      but we should? In the worst case it will not work with edit boxes,
+      and always activate menu command.
+    - What happens if we included unnecessarily some key in this treatment?
+      Everything should be OK, if only we simulate default behavior OK.
+
+    Tested: It is necessary, and good workaround,
+    - (FPC 3.2.2, LCL 2.2) on Windows with WinAPI widgetset.
+    - (FPC 3.2.2, LCL 2.2) on Linux with GTK widgetset.
+
     Note: TTreeView also handles Home / End.
     Strangely, it behaves like we want out-of-the-box:
     it intercepts Home / End when focused, regardless of if some menu item
     has such shortcut.
-
-    Tested:
-    - It is necessary, and good workaround, on Windows with WinAPI widgetset.
+    Tested this is true on:
+    - (FPC 3.2.2, LCL 2.2) on Windows with WinAPI widgetset.
+    - (FPC 3.2.2, LCL 2.2) on Linux with GTK widgetset.
   }
 
   if not CheckBoxKeyMenuHack.Checked then
@@ -146,11 +176,7 @@ begin
       case Key of
         VK_HOME: TEdit(ActiveControl).SelStart := 0;
         VK_0..VK_9: TEdit(ActiveControl).SelText := Chr(Ord('0') + Key - VK_0);
-        VK_F:
-          if ssShift in Shift then
-            TEdit(ActiveControl).SelText := 'F'
-          else
-            TEdit(ActiveControl).SelText := 'f';
+        VK_F: TEdit(ActiveControl).SelText := IfThen(LettersUpCase, 'F', 'f');
         VK_Z:
           if Shift = [ssCtrl] then
             TEdit(ActiveControl).Undo

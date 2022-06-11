@@ -4,7 +4,7 @@ object Form1: TForm1
   Top = 242
   Width = 1131
   Caption = 'Form1'
-  ClientHeight = 688
+  ClientHeight = 683
   ClientWidth = 1131
   DesignTimePPI = 120
   KeyPreview = True
@@ -15,7 +15,7 @@ object Form1: TForm1
   LCLVersion = '2.2.0.4'
   object Edit1: TEdit
     Left = 86
-    Height = 28
+    Height = 38
     Top = 82
     Width = 234
     TabOrder = 0
@@ -69,9 +69,9 @@ object Form1: TForm1
   end
   object CheckBoxKeyMenuHack: TCheckBox
     Left = 267
-    Height = 24
+    Height = 26
     Top = 20
-    Width = 202
+    Width = 249
     Caption = 'Enable hack to handle keys'
     Checked = True
     State = cbChecked

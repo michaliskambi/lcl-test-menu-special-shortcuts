@@ -1,5 +1,7 @@
+project1
 backup
 lib
 *~
 *.res
 *.exe
+*.lps
