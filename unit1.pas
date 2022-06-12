@@ -135,6 +135,7 @@ begin
     Tested: It is necessary, and good workaround,
     - (FPC 3.2.2, LCL 2.2) on Windows with WinAPI widgetset.
     - (FPC 3.2.2, LCL 2.2) on Linux with GTK widgetset.
+    - (FPC 3.2.2, LCL 2.2) on macOS with Cocoa widgetset.
 
     Note: TTreeView also handles Home / End.
     Strangely, it behaves like we want out-of-the-box:
@@ -143,6 +144,7 @@ begin
     Tested this is true on:
     - (FPC 3.2.2, LCL 2.2) on Windows with WinAPI widgetset.
     - (FPC 3.2.2, LCL 2.2) on Linux with GTK widgetset.
+    - (FPC 3.2.2, LCL 2.2) on macOS with Cocoa widgetset.
   }
 
   if not CheckBoxKeyMenuHack.Checked then
@@ -180,6 +182,13 @@ begin
     begin
       case Key of
         VK_HOME: TEdit(ActiveControl).SelStart := 0;
+        {$ifdef LCLCocoa}
+        { If user didn't adjust Home/End system-wide, then actually
+          by default Home/End do nothing in TEdit.
+          So we could disable Home...
+          but it seems more useful to make Home/End just work in CGE TEdit. }
+        VK_END: TEdit(ActiveControl).SelStart := Length(TEdit(ActiveControl).Text);
+        {$endif}
         VK_0..VK_9: TEdit(ActiveControl).SelText := Chr(Ord('0') + Key - VK_0);
         VK_F: TEdit(ActiveControl).SelText := IfThen(LettersUpCase, 'F', 'f');
         VK_Z:
