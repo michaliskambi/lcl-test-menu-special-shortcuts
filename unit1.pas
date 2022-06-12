@@ -25,6 +25,11 @@ type
     MenuItem1: TMenuItem;
     MenuItem10: TMenuItem;
     MenuItem11: TMenuItem;
+    MenuItem12: TMenuItem;
+    MenuItem13: TMenuItem;
+    MenuItem14: TMenuItem;
+    MenuItem15: TMenuItem;
+    MenuItem16: TMenuItem;
     MenuItem2: TMenuItem;
     MenuItem3: TMenuItem;
     MenuItem4: TMenuItem;
@@ -87,12 +92,19 @@ procedure TForm1.FormKeyDown(Sender: TObject; var Key: Word; Shift: TShiftState)
       Result := not Result;
   end;
 
+  function SEnding(const S: string; P: integer): string;
+  begin
+    result := Copy(S, P, MaxInt)
+  end;
+
 var
   S: String;
+  E: TEdit;
+  SavedSelStart: Integer;
 begin
   { This is a hack to
     - Have some menu items with simple shortcuts, like Home, F, Ctrl+Z
-      (and *visible* in meun with these shortcuts, to be discoverable)
+      (and *visible* in menu with these shortcuts, to be discoverable)
     - but still allow user to interact with text input (like TEdit)
       using Home, F, Ctrl+Z etc.
 
@@ -121,7 +133,7 @@ begin
     - Our 2 important text-editing states are TEdit and editing in TTreeView,
       the latter is luckily just an internal TEdit too.
 
-    Note: This is still ugly and inheretntly unreliable workaround, because we
+    Note: This is still ugly and inherently unreliable workaround, because we
     interpret what some special built-in keys should do. So we need to
     capture all such keys, and implement same logic...
     E.g. pressing "f" key, with and without Shift, with and without CapsLock,
@@ -152,17 +164,10 @@ begin
 
   { Avoid infinite loop since all LCLSendKeyDownEvent
     allow form to preview keys. }
+  (*
   if InsideFormKeyDown then Exit;
   InsideFormKeyDown := true;
   try
-    S := 'FormKeyDown: ' + IntToStr(Key);
-    if ssShift in Shift then S += ' +Shift';
-    if ssCtrl in Shift then S += ' +Ctrl';
-    if ssAlt in Shift then S += ' +Alt';
-    if ssMeta in Shift then S += ' +Meta';
-    if Shift - [ssShift, ssCtrl, ssAlt, ssMeta] <> [] then S += ' +otherModifier';
-    Memo1.Lines.Add(S);
-
     { Below I was testing LCLSendKeyDownEvent usefulness for this hack:
 
       https://wiki.lazarus.freepascal.org/LCL_Tips
@@ -176,39 +181,116 @@ begin
     //if (ActiveControl <> nil) and
     //   (ActiveControl <> Self) then
     //  LCLSendKeyDownEvent(ActiveControl, Key, 0, false, false);
-    }
-
-    if ActiveControl is TEdit then
-    begin
-      case Key of
-        VK_HOME: TEdit(ActiveControl).SelStart := 0;
-        {$ifdef LCLCocoa}
-        { If user didn't adjust Home/End system-wide, then actually
-          by default Home/End do nothing in TEdit.
-          So we could disable Home...
-          but it seems more useful to make Home/End just work in CGE TEdit. }
-        VK_END: TEdit(ActiveControl).SelStart := Length(TEdit(ActiveControl).Text);
-        {$endif}
-        VK_0..VK_9: TEdit(ActiveControl).SelText := Chr(Ord('0') + Key - VK_0);
-        VK_F: TEdit(ActiveControl).SelText := IfThen(LettersUpCase, 'F', 'f');
-        VK_Z:
-          if Shift = [ssCtrl] then
-            TEdit(ActiveControl).Undo
-          else
-            Exit; // resign from special handling
-          //if Shift = [ssCtrl, ssShift] then
-          //  TEdit(ActiveControl).Redo
-          //else
-        else
-          Exit; // resign from special handling
-      end;
-
-      Memo1.Lines.Add('special key handling, focus is ' +
-        (ActiveControl as TEdit).Name + ':' + ActiveControl.ClassName);
-      Key := 0; // prevent key reaching normal menu/action event
-    end;
   finally
     InsideFormKeyDown := false;
+  end;
+  *)
+
+  S := 'FormKeyDown: ' + IntToStr(Key);
+  if ssShift in Shift then S += ' +Shift';
+  if ssCtrl in Shift then S += ' +Ctrl';
+  if ssAlt in Shift then S += ' +Alt';
+  if ssMeta in Shift then S += ' +Meta';
+  if Shift - [ssShift, ssCtrl, ssAlt, ssMeta] <> [] then S += ' +otherModifier';
+  Memo1.Lines.Add(S);
+
+  if ActiveControl is TEdit then
+  begin
+    E := TEdit(ActiveControl);
+    case Key of
+      VK_HOME:
+        begin
+          if Shift = [ssShift] then
+          begin
+            SavedSelStart := E.SelStart;
+            E.SelStart := 0;
+            E.SelLength := SavedSelStart;
+          end else
+            E.SelStart := 0
+        end;
+      {.$ifdef LCLCocoa}
+      { If user didn't adjust Home/End system-wide, then actually
+        by default Home/End do nothing in TEdit.
+        So we could disable Home...
+        but it seems more useful to make Home/End just work in CGE TEdit.
+
+        For easier testing, we enable our End handling on all platforms. }
+      VK_END:
+        begin
+          if Shift = [ssShift] then
+            E.SelLength := Length(E.Text) - E.SelStart
+          else
+            E.SelStart := Length(E.Text);
+        end;
+      {.$endif}
+      VK_0..VK_9:
+        begin
+          if E.ReadOnly then
+            Beep
+          else
+            E.SelText := Chr(Ord('0') + Key - VK_0);
+        end;
+      VK_F:
+        begin
+          if E.ReadOnly then
+            Beep
+          else
+            E.SelText := IfThen(LettersUpCase, 'F', 'f');
+        end;
+      VK_Z:
+        if Shift = [ssCtrl] then
+          E.Undo
+        else
+          Exit; // resign from special handling
+        //if Shift = [ssCtrl, ssShift] then
+        //  E.Redo
+        //else
+      VK_C:
+        if Shift = [ssCtrl] then
+          E.CopyToClipboard
+        else
+          Exit; // resign from special handling
+      VK_V:
+        if Shift = [ssCtrl] then
+        begin
+          if E.ReadOnly then
+            Beep
+          else
+            E.PasteFromClipboard;
+        end else
+          Exit; // resign from special handling
+      VK_X:
+        if Shift = [ssCtrl] then
+        begin
+          if E.ReadOnly then
+            Beep
+          else
+            E.CutToClipboard
+        end else
+          Exit; // resign from special handling
+      VK_DELETE:
+        if E.ReadOnly then
+          Beep
+        else
+        begin
+          if E.SelText <> '' then
+            E.SelText := ''
+          else
+          begin
+            SavedSelStart := E.SelStart;
+            E.Text :=
+              Copy(E.Text, 1, E.SelStart) +
+              SEnding(E.Text, E.SelStart + 2);
+            E.SelStart := SavedSelStart;
+          end;
+        end;
+      else
+        Exit; // resign from special handling
+    end;
+
+    Memo1.Lines.Add('special key handling, focus is ' +
+      (ActiveControl as TEdit).Name + ':' + ActiveControl.ClassName);
+    Key := 0; // prevent key reaching normal menu/action event
   end;
 end;
 
