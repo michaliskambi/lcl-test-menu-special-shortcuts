@@ -54,7 +54,9 @@ var
 
 implementation
 
-uses LCLType, LCLMessageGlue, StrUtils;
+uses
+  {$ifdef MSWINDOWS} Windows, {$endif}
+  LCLType, LCLMessageGlue, StrUtils;
 
 {$R *.lfm}
 
@@ -74,10 +76,13 @@ procedure TForm1.FormKeyDown(Sender: TObject; var Key: Word; Shift: TShiftState)
   function LettersUpCase: Boolean;
   begin
     Result := false;
-    { TODO: Windows-only:
-    GetKeyboardState(KeyState);
-    if KeyState[VK_CAPITAL] := 1 then
-      Result := true; }
+    // TODO: This is Windows-only.
+    {$ifdef MSWINDOWS}
+    { See https://docs.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-getkeystate .
+      Read low-order bit of VK_CAPITAL (caps lock) state. }
+    if (GetKeyState(VK_CAPITAL) and 1) <> 0 then
+      Result := true;
+    {$endif}
     if ssShift in Shift then
       Result := not Result;
   end;
