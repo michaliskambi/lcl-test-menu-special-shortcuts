@@ -4,7 +4,7 @@ interface
 
 uses
   Winapi.Windows, Winapi.Messages, System.SysUtils, System.Variants, System.Classes, Vcl.Graphics,
-  Vcl.Controls, Vcl.Forms, Vcl.Dialogs, Vcl.StdCtrls, Vcl.Menus;
+  Vcl.Controls, Vcl.Forms, Vcl.Dialogs, Vcl.StdCtrls, Vcl.Menus, Vcl.ComCtrls;
 
 type
   TForm1 = class(TForm)
@@ -15,6 +15,7 @@ type
     Menu21: TMenuItem;
     Menu3: TMenuItem;
     Menu4: TMenuItem;
+    TreeView1: TTreeView;
   private
     { Private declarations }
   public
