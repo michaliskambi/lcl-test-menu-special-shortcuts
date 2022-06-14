@@ -1,7 +1,7 @@
 object Form1: TForm1
-  Left = 351
+  Left = 789
   Height = 713
-  Top = 242
+  Top = 190
   Width = 1131
   Caption = 'Form1'
   ClientHeight = 683
@@ -87,6 +87,33 @@ object Form1: TForm1
     AutoFocus = True
     OnOpen = CastleControl1Open
     OnPress = CastleControl1Press
+  end
+  object ComboBox1: TComboBox
+    Left = 66
+    Height = 38
+    Top = 300
+    Width = 278
+    ItemHeight = 0
+    TabOrder = 6
+    Text = 'ComboBox1'
+  end
+  object ComboBox2: TComboBox
+    Left = 72
+    Height = 33
+    Top = 352
+    Width = 278
+    ItemHeight = 0
+    ItemIndex = 0
+    Items.Strings = (
+      'sdsdfsdf'
+      'sdfsdfsdfs'
+      'df'
+      'sdf'
+      'sdfsdfsdf'
+    )
+    Style = csOwnerDrawVariable
+    TabOrder = 7
+    Text = 'sdsdfsdf'
   end
   object MainMenu1: TMainMenu
     Left = 296
